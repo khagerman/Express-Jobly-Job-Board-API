@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-// why _ test
+// why _ test why named test Common
 const db = require("../db.js");
 const { BCRYPT_WORK_FACTOR } = require("../config");
 
