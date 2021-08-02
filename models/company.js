@@ -62,7 +62,7 @@ class Company {
       name !== undefined
     ) {
       const companies = await db.query(
-        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE WHERE name ILIKE $1 AND num_employees BETWEEN $2 AND $3`,
+        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees BETWEEN $2 AND $3`,
         [`%${name}%`, +minEmployees, +maxEmployees]
       );
       return companies.rows;
@@ -81,10 +81,10 @@ class Company {
       );
       return companies.rows;
     }
-    if (minEmployees !== undefined && name !== undefined) {
+    if (maxEmployees !== undefined && name !== undefined) {
       const companies = await db.query(
-        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees >= $2`,
-        [`%${name}%`, +minEmployees]
+        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees <= $2`,
+        [`%${name}%`, +maxEmployees]
       );
       return companies.rows;
     }
