@@ -62,8 +62,8 @@ class Company {
       name !== undefined
     ) {
       const companies = await db.query(
-        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE num_employees BETWEEN $1 AND $2 WHERE name ILIKE $3`,
-        [+minEmployees, +maxEmployees, `%${name}%`]
+        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE WHERE name ILIKE $1 AND num_employees BETWEEN $2 AND $3`,
+        [`%${name}%`, +minEmployees, +maxEmployees]
       );
       return companies.rows;
     }
