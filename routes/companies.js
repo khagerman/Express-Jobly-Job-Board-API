@@ -57,7 +57,6 @@ router.get("/", async function (req, res, next) {
       q.minEmployees = +q.minEmployees;
     }
     if (q.maxEmplyees) {
-      console.log("is this working?");
       q.maxEmployee = +q.maxEmployees;
     }
 
