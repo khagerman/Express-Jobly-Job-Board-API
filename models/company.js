@@ -50,55 +50,54 @@ class Company {
    * */
 
   static async findAll(search) {
-    const { minEmployees, maxEmployees, name } = search;
-    if (minEmployees > maxEmployees) {
+    let { minEmployees, maxEmployees, name } = search;
+
+    if (!name && !maxEmployees && !minEmployees) {
+      const companies = await db.query(
+        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies`
+      );
+      return companies.rows;
+    }
+    if (+minEmployees > +maxEmployees) {
       throw new ExpressError(
         "Min employees cannot be greater than max employees"
       );
     }
-    if (
-      minEmployees !== undefined &&
-      maxEmployees !== undefined &&
-      name !== undefined
-    ) {
+    let nameFilter;
+    if (name) {
+      nameFilter = "%" + name + "%";
+    }
+    if (!!name) {
       const companies = await db.query(
-        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees BETWEEN $2 AND $3`,
-        [`%${name}%`, +minEmployees, +maxEmployees]
+        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1`,
+        [nameFilter]
       );
       return companies.rows;
-    }
-    if (minEmployees !== undefined && maxEmployees !== undefined) {
+    } else if (minEmployees && maxEmployees && name) {
+      const companies = await db.query(
+        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees BETWEEN $2 AND $3`,
+        [nameFilter, +minEmployees, +maxEmployees]
+      );
+      return companies.rows;
+    } else if (!!minEmployees && !!name) {
+      const companies = await db.query(
+        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees >= $2`,
+        [nameFilter, +minEmployees]
+      );
+      return companies.rows;
+    } else if (!!maxEmployees && !!name) {
+      const companies = await db.query(
+        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees <= $2`,
+        [nameFilter, +maxEmployees]
+      );
+      return companies.rows;
+    } else {
       const companies = await db.query(
         `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE num_employees BETWEEN $1 AND $2`,
         [+minEmployees, +maxEmployees]
       );
       return companies.rows;
     }
-    if (minEmployees !== undefined && name !== undefined) {
-      const companies = await db.query(
-        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees >= $2`,
-        [`%${name}%`, +minEmployees]
-      );
-      return companies.rows;
-    }
-    if (maxEmployees !== undefined && name !== undefined) {
-      const companies = await db.query(
-        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1 AND num_employees <= $2`,
-        [`%${name}%`, +maxEmployees]
-      );
-      return companies.rows;
-    }
-    if (name !== undefined) {
-      const companies = await db.query(
-        `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies WHERE name ILIKE $1`,
-        [`%${name}%`]
-      );
-      return companies.rows;
-    }
-    const companies = await db.query(
-      `SELECT handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl" FROM companies`
-    );
-    return companies.rows;
   }
 
   /** Given a company handle, return data about company.

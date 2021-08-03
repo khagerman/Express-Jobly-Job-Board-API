@@ -53,20 +53,16 @@ router.get("/", async function (req, res, next) {
   try {
     const q = req.query;
     console.log(q.maxEmployees);
-    if (q.minEmplyees !== null) {
+    if (q.minEmplyees) {
       q.minEmployees = +q.minEmployees;
-    } else if (q.maxEmplyees !== null) {
+    }
+    if (q.maxEmplyees) {
       console.log("is this working?");
       q.maxEmployee = +q.maxEmployees;
-    } else if (q.name !== null) {
-      q.name = q.name;
-    } else {
-      throw new BadRequestError(`Please search by minEmployees
-  maxEmployees, or name`);
     }
 
     const companies = await Company.findAll(q);
-
+    console.log(companies);
     return res.json({ companies });
   } catch (err) {
     return next(err);
