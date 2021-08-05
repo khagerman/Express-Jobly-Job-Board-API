@@ -42,7 +42,29 @@ function ensureLoggedIn(req, res, next) {
   }
 }
 
+function ensureAdmin(req, res, next) {
+  // wouldn't this allow anyone not just admins to to do this
+  if (!res.locals.user || !res.locals.user.isAdmin) {
+    throw new UnauthorizedError();
+  }
+  return next();
+}
+
+function ensureUserAccountORAdmin(req, res, next) {
+  if (
+    !(
+      res.locals.user &&
+      (res.locals.user.isAdmin ||
+        res.locals.user.username === req.params.username)
+    )
+  ) {
+    throw new UnauthorizedError();
+  }
+  return next();
+}
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
+  ensureAdmin,
+  ensureUserAccountORAdmin,
 };
