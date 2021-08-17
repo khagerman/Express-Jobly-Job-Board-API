@@ -19,7 +19,7 @@ beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
 
-/************************************** POST /jobs */
+// post
 
 describe("POST /jobs", function () {
   test("ok for admin", async function () {

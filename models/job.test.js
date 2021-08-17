@@ -21,8 +21,8 @@ afterAll(commonAfterAll);
 describe("create", function () {
   let newJob = {
     companyHandle: "c1",
-    title: "Test",
-    salary: 100,
+    title: "Testing123",
+    salary: 100000,
     equity: "0.1",
   };
 
@@ -44,7 +44,7 @@ describe("findAll", function () {
       {
         id: expect.any(Number),
         title: "Job1",
-        salary: 100,
+        salary: 1,
         equity: "0.1",
         companyHandle: "c1",
         companyName: "C1",
@@ -52,7 +52,7 @@ describe("findAll", function () {
       {
         id: expect.any(Number),
         title: "Job2",
-        salary: 200,
+        salary: 2,
         equity: "0.2",
         companyHandle: "c1",
         companyName: "C1",

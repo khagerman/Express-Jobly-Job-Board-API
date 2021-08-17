@@ -40,11 +40,7 @@ router.post("/", ensureAdmin, async function (req, res, next) {
 
 /** GET / =>
  *   { jobs: [ { id, title, salary, equity, companyHandle, companyName }, ...] }
- *
- * Can provide search filter in query:
- * - minSalary
- * - hasEquity (true returns only jobs with equity > 0, other values ignored)
- * - title (will find case-insensitive, partial matches)
+ 
 
  * Authorization required: none
  */
@@ -52,7 +48,7 @@ router.post("/", ensureAdmin, async function (req, res, next) {
 router.get("/", async function (req, res, next) {
   const q = req.query;
 
-  if (q.minSalary !== undefined) q.minSalary = +q.minSalary;
+  if (!q.minSalary) q.minSalary = +q.minSalary;
   q.hasEquity = q.hasEquity === "true";
 
   try {
