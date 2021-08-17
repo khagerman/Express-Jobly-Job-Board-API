@@ -42,7 +42,7 @@ describe("findAll", function () {
     let jobs = await Job.findAll();
     expect(jobs).toEqual([
       {
-        id: testJobIds[0],
+        id: expect.any(Number),
         title: "Job1",
         salary: 100,
         equity: "0.1",
@@ -50,7 +50,7 @@ describe("findAll", function () {
         companyName: "C1",
       },
       {
-        id: testJobIds[1],
+        id: expect.any(Number),
         title: "Job2",
         salary: 200,
         equity: "0.2",
@@ -58,7 +58,7 @@ describe("findAll", function () {
         companyName: "C1",
       },
       {
-        id: testJobIds[2],
+        id: expect.any(Number),
         title: "Job3",
         salary: 300,
         equity: "0",
@@ -66,7 +66,7 @@ describe("findAll", function () {
         companyName: "C1",
       },
       {
-        id: testJobIds[3],
+        id: expect.any(Number),
         title: "Job4",
         salary: null,
         equity: null,
@@ -214,8 +214,9 @@ describe("update", function () {
 describe("remove", function () {
   test("works", async function () {
     await Job.remove(testJobIds[0]);
-    const res = await db.query(
-        "SELECT id FROM jobs WHERE id=$1", [testJobIds[0]]);
+    const res = await db.query("SELECT id FROM jobs WHERE id=$1", [
+      testJobIds[0],
+    ]);
     expect(res.rows.length).toEqual(0);
   });
 

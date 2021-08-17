@@ -1,9 +1,8 @@
 "use strict";
 
 const db = require("../db");
-const { NotFoundError} = require("../expressError");
+const { NotFoundError } = require("../expressError");
 const { sqlForPartialUpdate } = require("../helpers/sql");
-
 
 /** Related functions for companies. */
 
@@ -17,18 +16,14 @@ class Job {
 
   static async create(data) {
     const result = await db.query(
-          `INSERT INTO jobs (title,
+      `INSERT INTO jobs (title,
                              salary,
                              equity,
                              company_handle)
            VALUES ($1, $2, $3, $4)
            RETURNING id, title, salary, equity, company_handle AS "companyHandle"`,
-        [
-          data.title,
-          data.salary,
-          data.equity,
-          data.companyHandle,
-        ]);
+      [data.title, data.salary, data.equity, data.companyHandle]
+    );
     let job = result.rows[0];
 
     return job;
@@ -44,44 +39,69 @@ class Job {
    * Returns [{ id, title, salary, equity, companyHandle, companyName }, ...]
    * */
 
-  static async findAll({ minSalary, hasEquity, title } = {}) {
-    let query = `SELECT j.id,
-                        j.title,
-                        j.salary,
-                        j.equity,
-                        j.company_handle AS "companyHandle",
-                        c.name AS "companyName"
-                 FROM jobs j 
-                   LEFT JOIN companies AS c ON c.handle = j.company_handle`;
-    let whereExpressions = [];
-    let queryValues = [];
-
-    // For each possible search term, add to whereExpressions and
-    // queryValues so we can generate the right SQL
-
-    if (minSalary !== undefined) {
-      queryValues.push(minSalary);
-      whereExpressions.push(`salary >= $${queryValues.length}`);
+  static async findAll(search = {}) {
+    let { title, minSalary, hasEquity } = search;
+    if (!title && !minSalary && !hasEquity) {
+      const jobs = await db.query(
+        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs`
+      );
+      return jobs.rows;
     }
 
-    if (hasEquity === true) {
-      whereExpressions.push(`equity > 0`);
+    let titleFilter;
+    if (title) {
+      titleFilter = "%" + title + "%";
     }
 
-    if (title !== undefined) {
-      queryValues.push(`%${title}%`);
-      whereExpressions.push(`title ILIKE $${queryValues.length}`);
+    // only equity
+    if (hasEquity == "true" && !minSalary && !title) {
+      const jobs = await db.query(
+        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE equity > 0`
+      );
+      return jobs.rows;
+      // only min
+    } else if (!!minSalary && !hasEquity && !title) {
+      const jobs = await db.query(
+        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE salary >= $1`,
+        [+minSalary]
+      );
+      return jobs.rows;
+      // only name
+    } else if (!!title && !hasEquity && !minSalary) {
+      const jobs = await db.query(
+        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1`,
+        [titleFilter]
+      );
+      return jobs.rows;
+      //  no equity
+    } else if (!hasEquity && !!minSalary && !!title) {
+      const jobs = await db.query(
+        ` SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND salary >= $2`,
+        [titleFilter, +minSalary]
+      );
+      return jobs.rows;
+      // no min
+    } else if (hasEquity == "true" && !minSalary && !!title) {
+      const jobs = await db.query(
+        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND  +equity > 0`,
+        [titleFilter]
+      );
+      return jobs.rows;
+    } // all filters
+    else if (!!minSalary && hasEquity == "true" && !!title) {
+      const jobs = await db.query(
+        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND salary >= $2 AND +equity > 0`,
+        [titleFilter, +minSalary]
+      );
+      return jobs.rows;
+    } else {
+      // only min and equity
+      const jobs = await db.query(
+        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE salary >= $1 AND +equity > 0`,
+        [+minSalary]
+      );
+      return jobs.rows;
     }
-
-    if (whereExpressions.length > 0) {
-      query += " WHERE " + whereExpressions.join(" AND ");
-    }
-
-    // Finalize query and return results
-
-    query += " ORDER BY title";
-    const jobsRes = await db.query(query, queryValues);
-    return jobsRes.rows;
   }
 
   /** Given a job id, return data about job.
@@ -94,26 +114,30 @@ class Job {
 
   static async get(id) {
     const jobRes = await db.query(
-          `SELECT id,
+      `SELECT id,
                   title,
                   salary,
                   equity,
                   company_handle AS "companyHandle"
            FROM jobs
-           WHERE id = $1`, [id]);
+           WHERE id = $1`,
+      [id]
+    );
 
     const job = jobRes.rows[0];
 
     if (!job) throw new NotFoundError(`No job: ${id}`);
 
     const companiesRes = await db.query(
-          `SELECT handle,
+      `SELECT handle,
                   name,
                   description,
                   num_employees AS "numEmployees",
                   logo_url AS "logoUrl"
            FROM companies
-           WHERE handle = $1`, [job.companyHandle]);
+           WHERE handle = $1`,
+      [job.companyHandle]
+    );
 
     delete job.companyHandle;
     job.company = companiesRes.rows[0];
@@ -134,9 +158,7 @@ class Job {
    */
 
   static async update(id, data) {
-    const { setCols, values } = sqlForPartialUpdate(
-        data,
-        {});
+    const { setCols, values } = sqlForPartialUpdate(data, {});
     const idVarIdx = "$" + (values.length + 1);
 
     const querySql = `UPDATE jobs 
@@ -162,10 +184,12 @@ class Job {
 
   static async remove(id) {
     const result = await db.query(
-          `DELETE
+      `DELETE
            FROM jobs
            WHERE id = $1
-           RETURNING id`, [id]);
+           RETURNING id`,
+      [id]
+    );
     const job = result.rows[0];
 
     if (!job) throw new NotFoundError(`No job: ${id}`);
