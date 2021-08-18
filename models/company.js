@@ -146,9 +146,11 @@ class Company {
       `SELECT id,
                   title,
                   salary,
-                  equity,
-                  company_handle = $1
-           FROM jobs`[handle]
+                  equity
+                  FROM jobs
+                WHERE company_handle = $1
+           `,
+      [handle]
     );
     company.jobs = jobs.rows;
     return company;
