@@ -48,7 +48,7 @@ router.post("/", ensureAdmin, async function (req, res, next) {
 router.get("/", async function (req, res, next) {
   const q = req.query;
 
-  if (!q.minSalary) q.minSalary = +q.minSalary;
+  if (q.minSalary) q.minSalary = +q.minSalary;
   q.hasEquity = q.hasEquity === "true";
 
   try {

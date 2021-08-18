@@ -31,7 +31,7 @@ class Job {
 
   /** Find all jobs (optional filter on searchFilters).
    *
-   * searchFilters (all optional):
+   * searchFilters
    * - minSalary
    * - hasEquity (true returns only jobs with equity > 0, other values ignored)
    * - title (will find case-insensitive, partial matches)
@@ -43,7 +43,7 @@ class Job {
     let { title, minSalary, hasEquity } = search;
     if (!title && !minSalary && !hasEquity) {
       const jobs = await db.query(
-        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs`
+        `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs`
       );
       return jobs.rows;
     }
@@ -56,7 +56,7 @@ class Job {
     // only equity
     if (hasEquity == "true" && !minSalary && !title) {
       const jobs = await db.query(
-        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE equity > 0`
+        `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE equity > 0`
       );
       return jobs.rows;
       // only min
@@ -69,35 +69,35 @@ class Job {
       // only name
     } else if (!!title && !hasEquity && !minSalary) {
       const jobs = await db.query(
-        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1`,
+        `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1`,
         [titleFilter]
       );
       return jobs.rows;
       //  no equity
     } else if (!hasEquity && !!minSalary && !!title) {
       const jobs = await db.query(
-        ` SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND salary >= $2`,
+        ` SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND salary >= $2`,
         [titleFilter, +minSalary]
       );
       return jobs.rows;
       // no min
     } else if (hasEquity == "true" && !minSalary && !!title) {
       const jobs = await db.query(
-        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND  +equity > 0`,
+        `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND  +equity > 0`,
         [titleFilter]
       );
       return jobs.rows;
     } // all filters
     else if (!!minSalary && hasEquity == "true" && !!title) {
       const jobs = await db.query(
-        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND salary >= $2 AND +equity > 0`,
+        `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND salary >= $2 AND +equity > 0`,
         [titleFilter, +minSalary]
       );
       return jobs.rows;
     } else {
       // only min and equity
       const jobs = await db.query(
-        `SELECT title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE salary >= $1 AND +equity > 0`,
+        `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE salary >= $1 AND +equity > 0`,
         [+minSalary]
       );
       return jobs.rows;
