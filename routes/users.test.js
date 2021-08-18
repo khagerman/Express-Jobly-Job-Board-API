@@ -13,6 +13,7 @@ const {
   commonAfterAll,
   u1Token,
   u3Token,
+  jobIDs,
 } = require("./_testCommon");
 
 beforeAll(commonBeforeAll);
@@ -333,6 +334,50 @@ describe("DELETE /users/:username", function () {
   test("not found if user missing", async function () {
     const resp = await request(app)
       .delete(`/users/nope`)
+      .set("authorization", `Bearer ${u3Token}`);
+    expect(resp.statusCode).toEqual(404);
+  });
+});
+/************************************** POST /users/:username/id */
+describe("POST /users/:username/jobs/:id", () => {
+  test("works for Account Owner", async function () {
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${jobIDs[0]}`)
+
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.body).toEqual({ applied: jobIDs[0] });
+  });
+  test("works for ADMIN who is NOT Account Owner", async function () {
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${jobIDs[0]}`)
+
+      .set("authorization", `Bearer ${u3Token}`);
+    expect(resp.body).toEqual({ applied: jobIDs[0] });
+  });
+  test("unauth for non account owner that is not admin", async function () {
+    const resp = await request(app)
+      .post(`/users/u2/jobs/${jobIDs[0]}`)
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("unauth for anon", async function () {
+    const resp = await request(app).post(`/users/u1/jobs/${jobIDs[0]}`);
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("not found if no such user", async function () {
+    const resp = await request(app)
+      .post(`/users/u0/jobs/${jobIDs[0]}`)
+
+      .set("authorization", `Bearer ${u3Token}`);
+
+    expect(resp.statusCode).toEqual(404);
+  });
+
+  test("not found for no such job", async function () {
+    const resp = await request(app)
+      .post(`/users/u1/jobs/0`)
       .set("authorization", `Bearer ${u3Token}`);
     expect(resp.statusCode).toEqual(404);
   });
