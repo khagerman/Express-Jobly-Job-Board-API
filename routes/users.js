@@ -131,5 +131,24 @@ router.delete(
     }
   }
 );
+/** Apply/[username, job_id]  =>  { deleted: username }
+ *
+ * Authorization required: account owner, admin
+ **/
+
+router.post(
+  "/:username/jobs/:id",
+  ensureLoggedIn,
+  ensureUserAccountORAdmin,
+  async function (req, res, next) {
+    try {
+      await User.apply(req.params.username, +req.params.id);
+      return res.json({ applied: +req.params.id });
+    } catch (err) {
+      console.log(err);
+      return next(err);
+    }
+  }
+);
 
 module.exports = router;
