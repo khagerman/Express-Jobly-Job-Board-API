@@ -29,14 +29,7 @@ class Job {
     return job;
   }
 
-  /** Find all jobs (optional filter on searchFilters).
-   *
-   * searchFilters
-   * - minSalary
-   * - hasEquity (true returns only jobs with equity > 0, other values ignored)
-   * - title (will find case-insensitive, partial matches)
-   *
-   * Returns [{ id, title, salary, equity, companyHandle, companyName }, ...]
+  /** find all jobs or search (if you want) by job title, min salary or by if it has equity
    * */
 
   static async findAll(search = {}) {
@@ -54,7 +47,7 @@ class Job {
     }
 
     // only equity
-    if (hasEquity == "true" && !minSalary && !title) {
+    if (hasEquity == true && !minSalary && !title) {
       const jobs = await db.query(
         `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE equity > 0`
       );
@@ -81,14 +74,14 @@ class Job {
       );
       return jobs.rows;
       // no min
-    } else if (hasEquity == "true" && !minSalary && !!title) {
+    } else if (hasEquity == true && !minSalary && !!title) {
       const jobs = await db.query(
         `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND  +equity > 0`,
         [titleFilter]
       );
       return jobs.rows;
     } // all filters
-    else if (!!minSalary && hasEquity == "true" && !!title) {
+    else if (!!minSalary && hasEquity == true && !!title) {
       const jobs = await db.query(
         `SELECT id, title, salary, equity, company_handle AS "companyHandle" FROM jobs WHERE title ILIKE $1 AND salary >= $2 AND +equity > 0`,
         [titleFilter, +minSalary]
@@ -104,16 +97,12 @@ class Job {
     }
   }
 
-  /** Given a job id, return data about job.
-   *
-   * Returns { id, title, salary, equity, companyHandle, company }
-   *   where company is { handle, name, description, numEmployees, logoUrl }
-   *
-   * Throws NotFoundError if not found.
+  /** search by id to find info on job
+  throws error if not found
    **/
 
   static async get(id) {
-    const jobRes = await db.query(
+    const jobs = await db.query(
       `SELECT id,
                   title,
                   salary,
@@ -124,11 +113,11 @@ class Job {
       [id]
     );
 
-    const job = jobRes.rows[0];
+    const job = jobs.rows[0];
 
     if (!job) throw new NotFoundError(`No job: ${id}`);
 
-    const companiesRes = await db.query(
+    let companyData = await db.query(
       `SELECT handle,
                   name,
                   description,
@@ -140,7 +129,7 @@ class Job {
     );
 
     delete job.companyHandle;
-    job.company = companiesRes.rows[0];
+    job.company = companyData.rows[0];
 
     return job;
   }
@@ -179,9 +168,8 @@ class Job {
 
   /** Delete given job from database; returns undefined.
    *
-   * Throws NotFoundError if company not found.
+   * Throws NotFoundError if job not found.
    **/
-
   static async remove(id) {
     const result = await db.query(
       `DELETE

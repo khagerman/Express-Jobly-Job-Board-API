@@ -8,7 +8,8 @@ const {
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
-  testJobIds,
+  JobIDs,
+  jobIDs,
 } = require("./_testCommon");
 
 beforeAll(commonBeforeAll);
@@ -44,98 +45,87 @@ describe("findAll", function () {
       {
         id: expect.any(Number),
         title: "Job1",
-        salary: 1,
-        equity: "0.1",
+        salary: 100,
+        equity: "0.12",
         companyHandle: "c1",
-        companyName: "C1",
       },
       {
         id: expect.any(Number),
         title: "Job2",
-        salary: 2,
+        salary: 200000,
         equity: "0.2",
         companyHandle: "c1",
-        companyName: "C1",
       },
       {
         id: expect.any(Number),
         title: "Job3",
         salary: 300,
         equity: "0",
-        companyHandle: "c1",
-        companyName: "C1",
-      },
-      {
-        id: expect.any(Number),
-        title: "Job4",
-        salary: null,
-        equity: null,
-        companyHandle: "c1",
-        companyName: "C1",
+        companyHandle: "c2",
       },
     ]);
   });
 
-  test("works: by min salary", async function () {
-    let jobs = await Job.findAll({ minSalary: 250 });
+  test("works: filter min salary", async function () {
+    let jobs = await Job.findAll({ minSalary: 200 });
     expect(jobs).toEqual([
       {
-        id: testJobIds[2],
-        title: "Job3",
-        salary: 300,
-        equity: "0",
         companyHandle: "c1",
-        companyName: "C1",
+        equity: "0.2",
+        salary: 200000,
+        title: "Job2",
+      },
+      {
+        companyHandle: "c2",
+        equity: "0",
+        salary: 300,
+        title: "Job3",
       },
     ]);
   });
 
-  test("works: by equity", async function () {
+  test("works: filter equity", async function () {
     let jobs = await Job.findAll({ hasEquity: true });
     expect(jobs).toEqual([
       {
-        id: testJobIds[0],
-        title: "Job1",
-        salary: 100,
-        equity: "0.1",
         companyHandle: "c1",
-        companyName: "C1",
+        equity: "0.12",
+        id: expect.any(Number),
+        salary: 100,
+        title: "Job1",
       },
       {
-        id: testJobIds[1],
-        title: "Job2",
-        salary: 200,
-        equity: "0.2",
         companyHandle: "c1",
-        companyName: "C1",
+        equity: "0.2",
+        id: expect.any(Number),
+        salary: 200000,
+        title: "Job2",
       },
     ]);
   });
 
-  test("works: by min salary & equity", async function () {
-    let jobs = await Job.findAll({ minSalary: 150, hasEquity: true });
+  test("works: filter min salary & equity", async function () {
+    let jobs = await Job.findAll({ minSalary: 250, hasEquity: true });
     expect(jobs).toEqual([
       {
-        id: testJobIds[1],
-        title: "Job2",
-        salary: 200,
-        equity: "0.2",
         companyHandle: "c1",
-        companyName: "C1",
+        equity: "0.2",
+        id: expect.any(Number),
+        salary: 200000,
+        title: "Job2",
       },
     ]);
   });
 
-  test("works: by name", async function () {
-    let jobs = await Job.findAll({ title: "ob1" });
+  test("works: filter by name", async function () {
+    let jobs = await Job.findAll({ title: "1" });
     expect(jobs).toEqual([
       {
-        id: testJobIds[0],
+        id: expect.any(Number),
         title: "Job1",
         salary: 100,
-        equity: "0.1",
+        equity: "0.12",
         companyHandle: "c1",
-        companyName: "C1",
       },
     ]);
   });
@@ -144,13 +134,14 @@ describe("findAll", function () {
 /************************************** get */
 
 describe("get", function () {
-  test("works", async function () {
-    let job = await Job.get(testJobIds[0]);
+  test("get by id", async function () {
+    console.log(jobIDs);
+    let job = await Job.get(jobIDs[0]);
     expect(job).toEqual({
-      id: testJobIds[0],
+      id: expect.any(Number),
       title: "Job1",
       salary: 100,
-      equity: "0.1",
+      equity: "0.12",
       company: {
         handle: "c1",
         name: "C1",
@@ -161,7 +152,7 @@ describe("get", function () {
     });
   });
 
-  test("not found if no such job", async function () {
+  test("fails if id that does not exist", async function () {
     try {
       await Job.get(0);
       fail();
@@ -174,24 +165,24 @@ describe("get", function () {
 /************************************** update */
 
 describe("update", function () {
-  let updateData = {
-    title: "New",
-    salary: 500,
-    equity: "0.5",
+  let update = {
+    title: "Updatedstuff",
+    salary: 5000000,
+    equity: "0.1",
   };
   test("works", async function () {
-    let job = await Job.update(testJobIds[0], updateData);
+    let job = await Job.update(jobIDs[0], update);
     expect(job).toEqual({
-      id: testJobIds[0],
+      id: jobIDs[0],
       companyHandle: "c1",
-      ...updateData,
+      ...update,
     });
   });
 
-  test("not found if no such job", async function () {
+  test("not found if no job with id", async function () {
     try {
       await Job.update(0, {
-        title: "test",
+        title: "THISSHOULDFAIL",
       });
       fail();
     } catch (err) {
@@ -199,11 +190,12 @@ describe("update", function () {
     }
   });
 
-  test("bad request with no data", async function () {
+  test("throws err if no data", async function () {
     try {
-      await Job.update(testJobIds[0], {});
+      await Job.update(jobIDs[0], {});
       fail();
     } catch (err) {
+      console.log(err);
       expect(err instanceof BadRequestError).toBeTruthy();
     }
   });
@@ -213,14 +205,12 @@ describe("update", function () {
 
 describe("remove", function () {
   test("works", async function () {
-    await Job.remove(testJobIds[0]);
-    const res = await db.query("SELECT id FROM jobs WHERE id=$1", [
-      testJobIds[0],
-    ]);
+    await Job.remove(jobIDs[0]);
+    const res = await db.query("SELECT id FROM jobs WHERE id=$1", [jobIDs[0]]);
     expect(res.rows.length).toEqual(0);
   });
 
-  test("not found if no such job", async function () {
+  test("not found if no job", async function () {
     try {
       await Job.remove(0);
       fail();
